@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,height=device-height">
+    <title>世界疫情应对能力统计地图</title>
+    <script defer src="my-charts.dart.js"></script>
+    <style>::-webkit-scrollbar{display:none;}html,body{overflow:hidden;height:100%;margin:0;}</style>
+</head>
+<body>
+<div id="mountNode"></div>
+<script>/*Fixing iframe window.innerHeight 0 issue in Safari*/document.body.clientHeight;</script>
+<script src="https://gw.alipayobjects.com/os/antv/pkg/_antv.g2-3.5.1/dist/g2.min.js"></script>
+<script src="https://gw.alipayobjects.com/os/antv/pkg/_antv.data-set-0.10.1/dist/data-set.min.js"></script>
+<script src="https://gw.alipayobjects.com/os/antv/assets/lib/jquery-3.2.1.min.js"></script>
+<script>
+  $.getJSON('https://gw.alipayobjects.com/os/antvdemo/assets/data/world.geo.json', function(mapData) {
+    var chart = new G2.Chart({
+      container: 'mountNode',
+      forceFit: true,
+      height: window.innerHeight,
+      padding: [40, 18]
+    });
+    chart.tooltip({
+      showTitle: false
+    });
+    // 同步度量
+    chart.scale({
+      longitude: {
+        sync: true
+      },
+      latitude: {
+        sync: true
+      }
+    });
+    chart.axis(false);
+    chart.legend('trend', {
+      position: 'right'
+    });
+
+    // 绘制世界地图背景
+    var ds = new DataSet();
+    var worldMap = ds.createView('back').source(mapData, {
+      type: 'GeoJSON'
+    });
+    var worldMapView = chart.view();
+    worldMapView.source(worldMap);
+    worldMapView.tooltip(false);
+    worldMapView.polygon().position('longitude*latitude').style({
+      fill: '#fff',
+      stroke: '#ccc',
+      lineWidth: 1
+    });
+
+    // 可视化用户数据
+    var userData = [{
+      name: 'Russia',
+      value: 110
+    }, {
+      name: 'China',
+      value: 200
+    }, {
+      name: 'Japan',
+      value: 100
+    }, {
+      name: 'Mongolia',
+      value: 95
+    }, {
+      name: 'Canada',
+      value: 90
+    }, {
+      name: 'United Kingdom',
+      value: 85
+    }, {
+      name: 'United States of America',
+      value: 80
+    }, {
+      name: 'Brazil',
+      value: 87
+    }, {
+      name: 'Argentina',
+      value: 90
+    }, {
+      name: 'Algeria',
+      value: 101.3
+    }, {
+      name: 'France',
+      value: 100
+    }, {
+      name: 'Germany',
+      value: 105
+    }, {
+      name: 'Ukraine',
+      value: 86.3
+    }, {
+      name: 'Egypt',
+      value: 102.1
+    }, {
+      name: 'South Africa',
+      value: 101.3
+    }, {
+      name: 'India',
+      value: 99
+    }, {
+      name: 'Australia',
+      value: 105
+    }, {
+      name: 'Saudi Arabia',
+      value: 130.1
+    }, {
+      name: 'Afghanistan',
+      value: 106.5
+    }, {
+      name: 'Kazakhstan',
+      value: 93.4
+    }, {
+      name: 'Indonesia',
+      value: 101.4
+    }];
+    var userDv = ds.createView().source(userData).transform({
+      geoDataView: worldMap,
+      field: 'name',
+      type: 'geo.region',
+      as: ['longitude', 'latitude']
+    }).transform({
+      type: 'map',
+      callback: function callback(obj) {
+        obj.trend = obj.value > 100 ? '应对能力强' : '应对能力弱';
+        return obj;
+      }
+    });
+    var userView = chart.view();
+    userView.source(userDv, {
+      'trend': {
+        alias: '应对疫情的综合能力'
+      }
+    });
+    userView.polygon().position('longitude*latitude').color('trend', ['#00FF00', '#FF4500']).opacity('value').tooltip('name*trend').animate({
+      leave: {
+        animation: 'fadeOut'
+      }
+    });
+    chart.render();
+  });
+</script>
+</body>
+</html>
